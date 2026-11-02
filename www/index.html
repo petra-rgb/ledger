@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F2EFE6" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Ledger" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<title>Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2EFE6; --ink:#2B2B2B; --rule:#c9c3b3; --dim:#6b6b63;
+    --faint:#e3ded0; --red:#B23A2E; --violet:#6B5B95; --green:#4C6B4F;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+    font-family:'IBM Plex Sans',system-ui,sans-serif;overscroll-behavior-y:none}
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  .lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--dim)}
+  header{padding:calc(20px + env(safe-area-inset-top)) 20px 16px;border-bottom:1px dashed var(--rule)}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:18px;letter-spacing:-.01em}
+  .totals{display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;gap:12px}
+  .big{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600}
+  .mid{font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--violet)}
+  main{padding:20px}
+  .panel{border:1px dashed var(--rule);padding:16px;margin-bottom:20px}
+  label.f{display:block;margin-bottom:16px}
+  label.f > span{display:block;margin-bottom:4px}
+  input,select,textarea{width:100%;background:transparent;border:none;border-bottom:1px solid var(--rule);
+    outline:none;padding:6px 0;color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:16px;
+    border-radius:0;-webkit-appearance:none;appearance:none}
+  input:focus,select:focus,textarea:focus{border-bottom-color:var(--ink)}
+  input[aria-invalid="true"]{border-bottom-color:var(--red)}
+  select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%236b6b63'/></svg>");
+    background-repeat:no-repeat;background-position:right 2px center;padding-right:16px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  button{font-family:'IBM Plex Mono',monospace;font-size:13px;text-transform:uppercase;letter-spacing:.06em;
+    padding:12px 16px;border:none;background:var(--ink);color:var(--paper);cursor:pointer;border-radius:0}
+  button:disabled{opacity:.4;cursor:default}
+  button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+  button.tiny{padding:4px 8px;font-size:11px}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px}
+  .entry{padding:10px 0;border-bottom:1px dashed var(--rule);display:flex;justify-content:space-between;
+    align-items:center;gap:12px}
+  .entry .name{font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .entry .meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-top:2px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .amt{font-family:'IBM Plex Mono',monospace;font-size:15px;white-space:nowrap}
+  .x{background:none;color:var(--dim);font-size:16px;line-height:1;
+    min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+  .entrymain{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:0;
+    background:none;border:none;padding:8px 0;margin:0;text-align:left;color:inherit;
+    font-family:inherit;font-size:inherit;text-transform:none;letter-spacing:normal;cursor:pointer}
+  .entrymain .name,.entrymain .meta{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+  .entrymain:active{opacity:.55}
+  .editbar{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    border:1px dashed var(--violet);padding:8px 10px;margin-bottom:4px}
+  .bar{height:6px;background:var(--faint);margin-top:4px}
+  .bar > div{height:6px}
+  .catrow{margin-bottom:12px}
+  .catrow .top{display:flex;justify-content:space-between;font-size:14px;gap:8px}
+  nav{position:fixed;bottom:0;left:0;right:0;background:var(--paper);border-top:1px dashed var(--rule);
+    display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+  nav button{flex:1;background:none;color:#a8a294;padding:14px 0;font-size:10px;display:flex;
+    flex-direction:column;align-items:center;gap:4px}
+  nav button[aria-selected="true"]{color:var(--ink);font-weight:600}
+  nav svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6}
+  .err{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--red);margin-top:8px;line-height:1.5}
+  .ok{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--green);margin-top:8px}
+  .hint{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);margin-top:8px;line-height:1.5}
+  .empty{font-size:14px;color:var(--dim);font-style:italic}
+  #shot{width:100%;max-height:160px;object-fit:cover;border:1px solid var(--rule);margin-bottom:12px;display:none}
+  #trend{width:100%;height:140px;display:block;margin-bottom:24px}
+  .prose{font-size:14px;line-height:1.65;white-space:pre-wrap;border-top:1px dashed var(--rule);padding-top:16px}
+  .spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;
+    border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+  .itemline{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:3px 0;gap:8px}
+  .itemshead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+  .additem{display:grid;grid-template-columns:1fr 80px 40px;gap:8px;align-items:end;margin-top:8px}
+  .additem button{padding:8px 0;font-size:16px;line-height:1}
+  .sectitle{margin:0 0 12px}
+  .monthhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+    margin:18px 0 2px;padding-bottom:4px;border-bottom:1px solid var(--rule);
+    font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--dim)}
+  .monthhead:first-child{margin-top:0}
+  .stack > * + *{margin-top:20px}
+  #toast{position:fixed;left:16px;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));
+    background:var(--ink);color:var(--paper);padding:12px 14px;display:none;align-items:center;
+    justify-content:space-between;gap:12px;font-size:13px;z-index:10}
+  #toast button{background:none;color:var(--paper);border:1px solid var(--paper);padding:6px 10px;font-size:11px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .keyrow{display:flex;gap:8px;align-items:flex-end}
+  .keyrow input{flex:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
+    Ledger
+  </div>
+  <div class="totals">
+    <div>
+      <div class="lbl" id="monthLabel">This month</div>
+      <div class="big" id="monthTotal">0.00</div>
+    </div>
+    <div style="text-align:right">
+      <div class="lbl">Subs / mo</div>
+      <div class="mid" id="subTotal">0.00</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ADD -->
+  <section id="tab-add" role="tabpanel" aria-labelledby="nav-add" tabindex="0">
+    <div class="panel">
+      <div class="lbl" style="margin-bottom:10px">Scan a receipt</div>
+      <img id="shot" alt="Preview of the receipt you just selected">
+      <div id="scanErr" role="alert" aria-live="assertive"></div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+      <button id="scanBtn" type="button">Scan receipt</button>
+      <div class="hint" id="keyHint" style="display:none">
+        Scanning needs an API key — add one in Settings.
+      </div>
+    </div>
+
+    <form id="expForm" class="stack" novalidate>
+      <div class="row">
+        <label class="f"><span class="lbl">Date</span><input type="date" id="e-date"></label>
+        <label class="f"><span class="lbl">Amount</span><input type="text" inputmode="decimal" id="e-amount" placeholder="0.00" autocomplete="off"></label>
+      </div>
+      <label class="f"><span class="lbl">Merchant</span><input type="text" id="e-merchant" placeholder="e.g. Konzum" autocomplete="off"></label>
+      <label class="f"><span class="lbl">Category</span><select id="e-category"></select></label>
+      <label class="f"><span class="lbl">What was it (optional)</span><input type="text" id="e-note" placeholder="e.g. poke bowl with Veronika" autocomplete="off"></label>
+      <div id="itemsBox"></div>
+      <div id="expErr" role="alert" aria-live="assertive"></div>
+      <div id="editBar" hidden class="editbar">
+        <span class="lbl">Editing an existing entry</span>
+        <button type="button" id="cancelEdit" class="ghost tiny">Cancel</button>
+      </div>
+      <button type="submit" id="expSubmit">+ Add expense</button>
+    </form>
+
+    <div style="margin-top:32px">
+      <div class="lbl sectitle">Recent</div>
+      <div id="recentList"></div>
+    </div>
+  </section>
+
+  <!-- SUBS -->
+  <section id="tab-subs" role="tabpanel" aria-labelledby="nav-subs" tabindex="0" hidden>
+    <form id="subForm" class="panel stack" novalidate>
+      <div class="lbl">New subscription</div>
+      <label class="f"><span class="lbl">Name</span><input type="text" id="s-name" placeholder="e.g. Spotify" autocomplete="off"></label>
+      <div class="row">
+        <label class="f"><span class="lbl">Amount</span><input type="text" inputmode="decimal" id="s-amount" placeholder="0.00" autocomplete="off"></label>
+        <label class="f"><span class="lbl">Billed</span>
+          <select id="s-cycle"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select>
+        </label>
+      </div>
+      <label class="f"><span class="lbl">Category</span><select id="s-category"></select></label>
+      <div id="subErr" role="alert" aria-live="assertive"></div>
+      <button type="submit">+ Add subscription</button>
+    </form>
+    <div class="lbl sectitle" id="subHead">Active</div>
+    <div id="subList"></div>
+  </section>
+
+  <!-- OVERVIEW -->
+  <section id="tab-overview" role="tabpanel" aria-labelledby="nav-overview" tabindex="0" hidden>
+    <div class="lbl sectitle">Last 14 days</div>
+    <canvas id="trend" role="img" aria-label="Daily spending over the last 14 days"></canvas>
+    <div class="lbl sectitle">By category, this month</div>
+    <div id="catList"></div>
+    <div class="lbl sectitle" style="margin-top:28px">All entries</div>
+    <div id="allList"></div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section id="tab-insights" role="tabpanel" aria-labelledby="nav-insights" tabindex="0" hidden>
+    <div class="panel">
+      <div class="lbl">This week</div>
+      <div class="big" id="weekTotal" style="font-size:20px;margin:4px 0 14px">0.00</div>
+      <button id="analyzeBtn" type="button">Analyze this week</button>
+      <div id="anaErr" role="alert" aria-live="assertive"></div>
+    </div>
+    <div id="anaOut" aria-live="polite"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-settings" role="tabpanel" aria-labelledby="nav-settings" tabindex="0" hidden class="stack">
+    <div class="panel">
+      <div class="lbl" style="margin-bottom:10px">Anthropic API key</div>
+      <div class="keyrow">
+        <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button id="revealKey" class="ghost tiny" type="button" aria-pressed="false">Show</button>
+      </div>
+      <div class="hint">Stored only on this phone, in this browser's local storage. Needed for receipt
+        scanning and the weekly analysis. Get one at console.anthropic.com.</div>
+      <div id="keyErr" role="alert" aria-live="polite"></div>
+      <div class="btnrow" style="margin-top:14px">
+        <button id="saveKey" type="button">Save key</button>
+        <button id="clearKey" class="ghost" type="button">Forget key</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="lbl" style="margin-bottom:10px">Model &amp; currency</div>
+      <label class="f"><span class="lbl">Model</span>
+        <select id="modelSel">
+          <option value="claude-opus-5">Claude Opus 5 — best accuracy</option>
+          <option value="claude-sonnet-5">Claude Sonnet 5 — cheaper</option>
+          <option value="claude-haiku-4-5">Claude Haiku 4.5 — cheapest</option>
+        </select>
+      </label>
+      <label class="f"><span class="lbl">Currency symbol</span><input type="text" id="currency" maxlength="3" placeholder="€"></label>
+    </div>
+
+    <div class="panel">
+      <div class="lbl" style="margin-bottom:10px">Daily reminder</div>
+      <label class="f"><span class="lbl">Remind me at</span><input type="time" id="remindAt" value="20:00"></label>
+      <div class="btnrow">
+        <button id="enableNotif" class="ghost" type="button">Enable reminder</button>
+        <button id="disableNotif" class="ghost" type="button">Turn off</button>
+      </div>
+      <div class="hint" id="notifState">Fires only while the app is open or recently backgrounded. iOS requires the app be installed to your home screen.</div>
+    </div>
+
+    <div class="panel">
+      <div class="lbl" style="margin-bottom:10px">Your data</div>
+      <div class="btnrow">
+        <button id="exportBtn" class="ghost" type="button">Export JSON</button>
+        <button id="importBtn" class="ghost" type="button">Import</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      <div id="ioMsg" role="alert" aria-live="polite"></div>
+      <div class="hint" id="storageHint">Everything lives on this device only. Export regularly if you care about it.</div>
+    </div>
+  </section>
+</main>
+
+<nav role="tablist" aria-label="Sections">
+  <button id="nav-add" role="tab" aria-selected="true" aria-controls="tab-add" data-tab="add">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+  <button id="nav-subs" role="tab" aria-selected="false" aria-controls="tab-subs" data-tab="subs" tabindex="-1">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg>Subs</button>
+  <button id="nav-overview" role="tab" aria-selected="false" aria-controls="tab-overview" data-tab="overview" tabindex="-1">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg>Overview</button>
+  <button id="nav-insights" role="tab" aria-selected="false" aria-controls="tab-insights" data-tab="insights" tabindex="-1">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.6L19.5 10l-4.5 3.3 1.6 5.7L12 15.8 7.4 19l1.6-5.7L4.5 10l5.6-1.4z"/></svg>Insights</button>
+  <button id="nav-settings" role="tab" aria-selected="false" aria-controls="tab-settings" data-tab="settings" tabindex="-1">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-2.9 1.2v.2a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.6 1.7 1.7 0 00-1.9.4l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00-1.2-2.9H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1.1 1.7 1.7 0 00-.4-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</button>
+</nav>
+
+<div id="toast" role="status" aria-live="polite">
+  <span id="toastMsg"></span>
+  <button id="toastAction" type="button">Undo</button>
+</div>
+
+<script>
+"use strict";
+
+/* ================= constants ================= */
+const CATEGORIES = ["Groceries","Food & Drink","Transport","Shopping","Bills & Utilities","Health","Entertainment","Travel","Other"];
+const CAT_COLOR = {"Groceries":"#4C6B4F","Food & Drink":"#B23A2E","Transport":"#3E5C76","Shopping":"#8A5A44",
+  "Bills & Utilities":"#6B5B95","Health":"#2E7D6B","Entertainment":"#B8860B","Travel":"#3E7C8C","Other":"#6B6B6B"};
+
+const MODELS = ["claude-opus-5","claude-sonnet-5","claude-haiku-4-5"];
+const DEFAULT_MODEL = "claude-opus-5";
+// Haiku 4.5 rejects output_config.effort and needs an explicit thinking budget,
+// so it is configured differently from the Opus/Sonnet 5 family below.
+const LEGACY_MODEL = /^claude-(sonnet|opus|haiku)-\d/;
+
+/* Running inside the Android WebView (Capacitor) rather than a browser.
+   Three things differ there: the service worker is pointless because the files
+   are already local, the Web Notification API does not work, and requests are
+   subject to the WebView's CORS rules — so each has a native path below. */
+const NATIVE = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function'
+                  && window.Capacitor.isNativePlatform());
+const plugin = name => (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) || null;
+
+const API_URL = 'https://api.anthropic.com/v1/messages';
+const API_TIMEOUT_MS = 90000;
+const MAX_IMAGE_EDGE = 1568;      // Anthropic downsizes anything larger anyway
+const MAX_IMAGE_B64 = 4.5 * 1024 * 1024; // API hard limit is 5MB of base64; leave headroom
+
+/* ================= helpers ================= */
+const $ = id => document.getElementById(id);
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// Number(undefined) is NaN and NaN + n poisons every total, so every amount that
+// enters state goes through this.
+const num = v => { const n = typeof v === 'number' ? v : parseFloat(v); return Number.isFinite(n) ? n : 0; };
+const money = n => (Math.round(num(n) * 100) / 100).toFixed(2);
+const cur = () => DB.get('currency', '€') || '€';
+const fmt = n => cur() + money(n);
+
+const localISO = d => {
+  const c = new Date(d.getTime());
+  c.setMinutes(c.getMinutes() - c.getTimezoneOffset());
+  return c.toISOString().slice(0, 10);
+};
+const todayStr = () => localISO(new Date());
+const daysAgoStr = n => { const d = new Date(); d.setDate(d.getDate() - n); return localISO(d); };
+const isISODate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
+
+/* Amount typed by a human. The field is type=text so that a comma survives long
+   enough to be read: type=number blanks ".value" for "3,50" in most browsers,
+   which made the European decimal key look broken. Comma is treated as the
+   decimal separator; a dot alongside it is read as a thousands separator. */
+function parseAmount(raw){
+  const s = String(raw == null ? '' : raw).trim().replace(/[^\d.,-]/g, '');
+  if (!s) return NaN;
+  const lastC = s.lastIndexOf(','), lastD = s.lastIndexOf('.');
+  let norm = s;
+  if (lastC > -1 && lastD > -1)      norm = lastC > lastD ? s.replace(/\./g, '').replace(/,/g, '.') : s.replace(/,/g, '');
+  else if (lastC > -1)               norm = s.replace(/,/g, '.');
+  if ((norm.match(/\./g) || []).length > 1) return NaN;   // 1.2.3 is not a number
+  const n = parseFloat(norm);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+/* ================= storage ================= */
+const DB = {
+  get(k, d){
+    try { const v = localStorage.getItem('ledger.' + k); return v === null ? d : JSON.parse(v); }
+    catch { return d; }
+  },
+  set(k, v){
+    try { localStorage.setItem('ledger.' + k, JSON.stringify(v)); return true; }
+    catch {
+      // QuotaExceededError, or Safari private mode. Tell the user instead of
+      // silently dropping the write.
+      toast('Could not save — device storage is full or blocked.', null);
+      return false;
+    }
+  },
+  del(k){ try { localStorage.removeItem('ledger.' + k); } catch {} }
+};
+
+/* Records can arrive from an older build of this app or from an imported file,
+   so nothing about their shape is trusted. */
+function cleanItem(raw){
+  if (!raw || typeof raw !== 'object') return null;
+  const name = String(raw.name == null ? '' : raw.name).slice(0, 120).trim();
+  if (!name) return null;
+  return { name, price: num(raw.price) };
+}
+function cleanExpense(raw){
+  if (!raw || typeof raw !== 'object') return null;
+  const amount = num(raw.amount);
+  const merchant = String(raw.merchant == null ? '' : raw.merchant).slice(0, 120).trim();
+  if (!merchant && !amount) return null;
+  return {
+    id: (typeof raw.id === 'string' && raw.id) ? raw.id.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) || uid() : uid(),
+    date: isISODate(raw.date) ? raw.date : todayStr(),
+    merchant: merchant || 'Unknown',
+    amount,
+    category: CATEGORIES.includes(raw.category) ? raw.category : 'Other',
+    note: String(raw.note == null ? '' : raw.note).slice(0, 500).trim(),
+    items: Array.isArray(raw.items) ? raw.items.map(cleanItem).filter(Boolean).slice(0, 200) : []
+  };
+}
+function cleanSub(raw){
+  if (!raw || typeof raw !== 'object') return null;
+  const name = String(raw.name == null ? '' : raw.name).slice(0, 120).trim();
+  if (!name) return null;
+  return {
+    id: (typeof raw.id === 'string' && raw.id) ? raw.id.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) || uid() : uid(),
+    name,
+    amount: num(raw.amount),
+    cycle: raw.cycle === 'yearly' ? 'yearly' : 'monthly',
+    category: CATEGORIES.includes(raw.category) ? raw.category : 'Other'
+  };
+}
+
+// Newest date first; ties broken by insertion order so a back-dated scan lands
+// in the right place instead of jumping to the top of "Recent".
+const byDateDesc = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+function sortExpenses(){ expenses = expenses.map((x, i) => (x._i = i, x)).sort((a, b) => byDateDesc(a, b) || a._i - b._i); }
+
+let expenses = (DB.get('expenses', []) || []).map(cleanExpense).filter(Boolean);
+let subs = (DB.get('subs', []) || []).map(cleanSub).filter(Boolean);
+sortExpenses();
+let pendingItems = [];
+
+function saveExpenses(){ sortExpenses(); DB.set('expenses', expenses.map(stripMeta)); }
+function saveSubs(){ DB.set('subs', subs); }
+const stripMeta = x => { const { _i, ...rest } = x; return rest; };
+
+/* ================= toast / undo ================= */
+let toastTimer = null, toastUndo = null;
+function toast(msg, undoFn, ms, label){
+  clearTimeout(toastTimer);
+  toastUndo = undoFn || null;
+  $('toastMsg').textContent = msg;
+  $('toastAction').textContent = label || 'Undo';
+  $('toastAction').hidden = !undoFn;
+  $('toast').style.display = 'flex';
+  toastTimer = setTimeout(hideToast, ms || (undoFn ? 7000 : 3500));
+}
+function hideToast(){ clearTimeout(toastTimer); $('toast').style.display = 'none'; toastUndo = null; }
+$('toastAction').onclick = () => { const f = toastUndo; hideToast(); if (f) f(); };
+
+/* ================= tabs ================= */
+const TABS = ['add','subs','overview','insights','settings'];
+const tabButtons = Array.from(document.querySelectorAll('nav button[role="tab"]'));
+
+function showTab(name){
+  tabButtons.forEach(b => {
+    const on = b.dataset.tab === name;
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+    b.tabIndex = on ? 0 : -1;
+  });
+  TABS.forEach(t => { $('tab-' + t).hidden = (t !== name); });
+  if (name === 'overview') drawTrend();
+  window.scrollTo(0, 0);
+}
+tabButtons.forEach(b => {
+  b.onclick = () => showTab(b.dataset.tab);
+  b.onkeydown = e => {
+    const i = tabButtons.indexOf(b);
+    let j = -1;
+    if (e.key === 'ArrowRight') j = (i + 1) % tabButtons.length;
+    else if (e.key === 'ArrowLeft') j = (i - 1 + tabButtons.length) % tabButtons.length;
+    else if (e.key === 'Home') j = 0;
+    else if (e.key === 'End') j = tabButtons.length - 1;
+    if (j >= 0){ e.preventDefault(); tabButtons[j].focus(); showTab(tabButtons[j].dataset.tab); }
+  };
+});
+
+/* ================= selects ================= */
+[$('e-category'), $('s-category')].forEach(sel => {
+  sel.innerHTML = CATEGORIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+});
+$('e-date').value = todayStr();
+$('e-date').max = todayStr();
+$('e-amount').addEventListener('input', () => { if (pendingItems.length) renderItems(); });
+
+/* ================= rendering ================= */
+const monthOf = d => String(d || '').slice(0, 7);
+const MONTH_NAMES = ['January','February','March','April','May','June',
+  'July','August','September','October','November','December'];
+const monthLabel = mk => {
+  const [y, m] = mk.split('-');
+  return (MONTH_NAMES[Number(m) - 1] || mk) + ' ' + y;
+};
+
+/* The header total is scoped to this month, so a list that silently mixes
+   months reads as though the total is wrong. Subtotal each month instead. */
+function groupedEntriesHTML(list){
+  if (!list.length) return '<div class="empty">Nothing logged yet.</div>';
+  const sums = {};
+  list.forEach(x => { const k = monthOf(x.date); sums[k] = (sums[k] || 0) + x.amount; });
+  const out = [];
+  let seen = null;
+  list.forEach(x => {
+    const k = monthOf(x.date);
+    if (k !== seen){
+      seen = k;
+      out.push(`<div class="monthhead"><span>${esc(monthLabel(k))}</span><span class="mono">${esc(fmt(sums[k]))}</span></div>`);
+    }
+    out.push(entryHTML(x));
+  });
+  return out.join('');
+}
+
+function entryHTML(x){
+  const bits = [x.date, x.category];
+  if (x.items && x.items.length) bits.push(x.items.length + (x.items.length === 1 ? ' item' : ' items'));
+  if (x.note) bits.push(x.note);
+  return `<div class="entry">
+    <button type="button" class="entrymain" data-edit="${esc(x.id)}"
+            aria-label="Edit ${esc(x.merchant)}, ${esc(fmt(x.amount))}">
+      <span class="name">${esc(x.merchant)}</span>
+      <span class="meta">${esc(bits.join(' · '))}</span>
+    </button>
+    <div style="display:flex;align-items:center;gap:6px;flex:none">
+      <span class="amt">${esc(fmt(x.amount))}</span>
+      <button class="x" type="button" data-del="${esc(x.id)}" aria-label="Delete ${esc(x.merchant)}, ${esc(fmt(x.amount))}">✕</button>
+    </div>
+  </div>`;
+}
+
+function render(){
+  const mk = monthOf(todayStr());
+  const thisMonth = expenses.filter(x => monthOf(x.date) === mk);
+  $('monthTotal').textContent = fmt(thisMonth.reduce((s, x) => s + x.amount, 0));
+  const subMo = subs.reduce((s, x) => s + (x.cycle === 'yearly' ? x.amount / 12 : x.amount), 0);
+  $('subTotal').textContent = fmt(subMo);
+
+  $('recentList').innerHTML = expenses.length
+    ? expenses.slice(0, 6).map(entryHTML).join('')
+    : '<div class="empty">Nothing logged yet.</div>';
+  $('allList').innerHTML = groupedEntriesHTML(expenses);
+
+  const byCat = {};
+  thisMonth.forEach(x => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
+  const max = Math.max(0.01, ...Object.values(byCat));
+  $('catList').innerHTML = Object.keys(byCat).length
+    ? Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([c, a]) => `
+      <div class="catrow">
+        <div class="top"><span>${esc(c)}</span><span class="mono">${esc(fmt(a))}</span></div>
+        <div class="bar"><div style="width:${Math.max(0, Math.min(100, (a / max) * 100))}%;background:${esc(CAT_COLOR[c] || '#6B6B6B')}"></div></div>
+      </div>`).join('')
+    : '<div class="empty">No expenses this month yet.</div>';
+
+  const subYr = subs.reduce((s, x) => s + (x.cycle === 'yearly' ? x.amount : x.amount * 12), 0);
+  $('subHead').textContent = `Active (${subs.length}) · ${fmt(subMo)}/mo · ${fmt(subYr)}/yr`;
+  $('subList').innerHTML = subs.length ? subs.map(x => `
+    <div class="entry">
+      <div style="min-width:0"><div class="name">${esc(x.name)}</div>
+        <div class="meta">${esc(x.category)} · billed ${esc(x.cycle)}</div></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="amt">${esc(fmt(x.amount))}<span style="color:var(--dim)">/${x.cycle === 'yearly' ? 'yr' : 'mo'}</span></span>
+        <button class="x" type="button" data-delsub="${esc(x.id)}" aria-label="Delete subscription ${esc(x.name)}">✕</button>
+      </div>
+    </div>`).join('') : '<div class="empty">No subscriptions logged yet.</div>';
+
+  const wk = weekExpenses();
+  $('weekTotal').textContent = `${fmt(wk.reduce((s, x) => s + x.amount, 0))} · ${wk.length} ${wk.length === 1 ? 'entry' : 'entries'}`;
+  $('analyzeBtn').disabled = wk.length === 0 || busy.analyze;
+
+  $('keyHint').style.display = DB.get('apiKey', '') ? 'none' : 'block';
+}
+
+// "This week" means the last 7 calendar days including today, so the cutoff is
+// 6 days back — daysAgoStr(7) would silently make it an 8-day window.
+const weekExpenses = () => expenses.filter(x => x.date >= daysAgoStr(6) && x.date <= todayStr());
+
+/* ---------- delete with undo ---------- */
+document.body.addEventListener('click', e => {
+  if (!e.target.closest) return;
+  const ed = e.target.closest('[data-edit]');
+  if (ed){ startEdit(ed.dataset.edit); return; }
+  const btn = e.target.closest('[data-del],[data-delsub]');
+  if (!btn) return;
+  const d = btn.dataset.del, ds = btn.dataset.delsub;
+  if (d){
+    const i = expenses.findIndex(x => x.id === d);
+    if (i < 0) return;
+    const [gone] = expenses.splice(i, 1);
+    saveExpenses(); render(); drawTrend();
+    toast(`Deleted ${gone.merchant}`, () => { expenses.push(gone); saveExpenses(); render(); drawTrend(); });
+  } else if (ds){
+    const i = subs.findIndex(x => x.id === ds);
+    if (i < 0) return;
+    const [gone] = subs.splice(i, 1);
+    saveSubs(); render();
+    toast(`Deleted ${gone.name}`, () => { subs.splice(i, 0, gone); saveSubs(); render(); });
+  }
+});
+
+/* ================= trend chart ================= */
+// Smallest "nice" axis top >= v that splits into `steps` round intervals.
+function niceCeiling(v, steps){
+  if (!(v > 0)) return 10;
+  const rough = v / steps;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const n = rough / mag;
+  const step = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
+  return step * steps;
+}
+
+function drawTrend(){
+  const c = $('trend');
+  const W = c.offsetWidth;
+  if (!W) return;                       // hidden tab: nothing to measure yet
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const H = 140;
+  c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+  const g = c.getContext('2d');
+  if (!g) return;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+
+  const days = Array.from({ length: 14 }, (_, i) => daysAgoStr(13 - i));
+  const totals = Object.create(null);
+  expenses.forEach(x => { totals[x.date] = (totals[x.date] || 0) + x.amount; });
+  const vals = days.map(d => totals[d] || 0);
+  // Scaling the peak by 1.15 produced arbitrary gridlines (0/20/39/59 for a
+  // 50.99 peak). Round the top up to a value that divides into clean steps.
+  const max = niceCeiling(Math.max(10, ...vals), 3);
+
+  g.font = '10px "IBM Plex Mono", monospace';
+  // Pad the gutter to whatever the largest tick label actually needs, instead of
+  // a fixed 34px that longer numbers overflow.
+  const ticks = [0, 1, 2, 3].map(i => cur() + Math.round(max * i / 3));
+  const padL = Math.ceil(Math.max.apply(null, ticks.map(t => g.measureText(t).width))) + 6;
+  const padB = 20, padT = 8, padR = 6;
+  const pw = Math.max(1, W - padL - padR), ph = H - padB - padT;
+  const px = i => padL + (pw * i / 13);
+  const py = v => padT + ph - (ph * v / max);
+
+  g.strokeStyle = '#e3ded0'; g.lineWidth = 1; g.setLineDash([3, 3]); g.fillStyle = '#6b6b63';
+  ticks.forEach((label, i) => {
+    const y = py(max * i / 3);
+    g.beginPath(); g.moveTo(padL, y); g.lineTo(W - padR, y); g.stroke();
+    g.fillText(label, 2, y + 3);
+  });
+  g.setLineDash([]);
+
+  g.beginPath();
+  vals.forEach((v, i) => { const x = px(i), y = py(v); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.strokeStyle = '#B23A2E'; g.lineWidth = 2; g.lineJoin = 'round'; g.stroke();
+
+  g.fillStyle = '#B23A2E';
+  vals.forEach((v, i) => { g.beginPath(); g.arc(px(i), py(v), 2.5, 0, Math.PI * 2); g.fill(); });
+
+  // Keep the last label inside the canvas rather than clipping it off the edge.
+  g.fillStyle = '#6b6b63';
+  [0, 4, 8, 13].forEach(i => {
+    const label = days[i].slice(5);
+    const w = g.measureText(label).width;
+    g.fillText(label, Math.max(0, Math.min(W - w, px(i) - w / 2)), H - 6);
+  });
+
+  const total = vals.reduce((s, v) => s + v, 0);
+  c.setAttribute('aria-label',
+    `Daily spending, last 14 days. Total ${fmt(total)}. Highest day ${fmt(Math.max.apply(null, vals))}.`);
+}
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (!$('tab-overview').hidden) drawTrend(); }, 120);
+});
+
+/* ================= forms ================= */
+const busy = { scan: false, analyze: false };
+let editingId = null;
+
+/* Correcting an entry used to mean deleting it and retyping the whole thing.
+   Tapping a row now loads it back into the form and saves over the original. */
+function startEdit(id){
+  const x = expenses.find(e => e.id === id);
+  if (!x) return;
+  editingId = id;
+  $('e-date').value = x.date;
+  $('e-amount').value = money(x.amount);
+  $('e-merchant').value = x.merchant;
+  $('e-category').value = CATEGORIES.includes(x.category) ? x.category : 'Other';
+  $('e-note').value = x.note || '';
+  pendingItems = (x.items || []).map(i => ({ name: i.name, price: i.price }));
+  renderItems();
+  fieldError('expErr', ['e-merchant', 'e-amount'], '');
+  reflectEditMode();
+  showTab('add');
+  $('expForm').scrollIntoView({ block: 'center', behavior: 'smooth' });
+  $('e-amount').focus();
+}
+
+function cancelEdit(){
+  editingId = null;
+  clearExpenseForm();
+  reflectEditMode();
+}
+
+function reflectEditMode(){
+  $('expSubmit').textContent = editingId ? 'Save changes' : '+ Add expense';
+  $('editBar').hidden = !editingId;
+}
+
+function clearExpenseForm(){
+  $('e-merchant').value = ''; $('e-amount').value = ''; $('e-note').value = '';
+  $('e-date').value = todayStr(); $('e-category').selectedIndex = 0;
+  pendingItems = []; renderItems();
+  $('shot').style.display = 'none'; $('shot').removeAttribute('src');
+  $('scanErr').innerHTML = '';
+  fieldError('expErr', ['e-merchant', 'e-amount'], '');
+}
+
+function fieldError(box, inputs, msg){
+  $(box).innerHTML = msg ? `<div class="err">${esc(msg)}</div>` : '';
+  inputs.forEach(id => $(id).setAttribute('aria-invalid', msg ? 'true' : 'false'));
+}
+
+$('expForm').onsubmit = e => {
+  e.preventDefault();
+  const merchant = $('e-merchant').value.trim();
+  const raw = $('e-amount').value.trim();
+  const amount = parseAmount(raw);
+
+  // The original silently returned here, so a typo looked like a dead button.
+  if (!merchant) return fieldError('expErr', ['e-merchant'], 'Add a merchant name.');
+  if (!raw || !Number.isFinite(amount)) return fieldError('expErr', ['e-amount'], 'Add an amount, e.g. 12.40 or 12,40.');
+  if (amount < 0) return fieldError('expErr', ['e-amount'], 'Amount cannot be negative.');
+  fieldError('expErr', ['e-merchant', 'e-amount'], '');
+
+  const date = isISODate($('e-date').value) ? $('e-date').value : todayStr();
+  const record = cleanExpense({
+    id: editingId || uid(), date, merchant, amount,
+    category: $('e-category').value, note: $('e-note').value.trim(), items: pendingItems
+  });
+
+  let msg;
+  if (editingId){
+    const i = expenses.findIndex(e => e.id === editingId);
+    const before = i >= 0 ? expenses[i] : null;
+    if (i >= 0) expenses[i] = record; else expenses.push(record);
+    msg = `Updated ${merchant}`;
+    editingId = null;
+    // Undo restores the row exactly as it was before the edit.
+    var undo = before ? () => {
+      const j = expenses.findIndex(e => e.id === before.id);
+      if (j >= 0) expenses[j] = before; else expenses.push(before);
+      saveExpenses(); render(); drawTrend();
+    } : null;
+  } else {
+    expenses.push(record);
+    msg = `Added ${merchant} · ${fmt(amount)}`;
+    DB.set('lastLog', todayStr());
+  }
+  saveExpenses();
+  clearExpenseForm();
+  reflectEditMode();
+  render(); drawTrend();
+  toast(msg, typeof undo !== 'undefined' ? undo : null);
+  $('e-merchant').focus();
+};
+
+$('subForm').onsubmit = e => {
+  e.preventDefault();
+  const name = $('s-name').value.trim();
+  const raw = $('s-amount').value.trim();
+  const amount = parseAmount(raw);
+  if (!name) return fieldError('subErr', ['s-name'], 'Give the subscription a name.');
+  if (!raw || !Number.isFinite(amount) || amount < 0) return fieldError('subErr', ['s-amount'], 'Add a valid amount, e.g. 9.99 or 9,99.');
+  fieldError('subErr', ['s-name', 's-amount'], '');
+
+  subs.unshift(cleanSub({ id: uid(), name, amount, cycle: $('s-cycle').value, category: $('s-category').value }));
+  saveSubs();
+  $('s-name').value = ''; $('s-amount').value = '';
+  render();
+  toast(`Added ${name}`, null);
+  $('s-name').focus();
+};
+
+/* ================= image preparation ================= */
+/* A modern phone photo is 3-12MB and may be HEIC. Sent raw it blows past the
+   API's 5MB base64 ceiling, or arrives in a format the API will not decode —
+   both surface as an opaque 400. Re-encode to a bounded JPEG first. */
+async function decodeImage(file){
+  if (typeof createImageBitmap === 'function'){
+    try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+    catch { /* Safari/HEIC: fall through to the <img> decoder */ }
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    return await new Promise((res, rej) => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.onerror = () => rej(new Error('that file is not an image this browser can read'));
+      im.src = url;
+    });
+  } finally { setTimeout(() => URL.revokeObjectURL(url), 10000); }
+}
+
+async function prepareImage(file){
+  const img = await decodeImage(file);
+  const sw = img.width || img.naturalWidth, sh = img.height || img.naturalHeight;
+  if (!sw || !sh) throw new Error('that image has no readable dimensions');
+  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(sw, sh));
+  const w = Math.max(1, Math.round(sw * scale)), h = Math.max(1, Math.round(sh * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);   // flatten any alpha for JPEG
+  ctx.drawImage(img, 0, 0, w, h);
+  if (img.close) img.close();
+
+  for (const q of [0.85, 0.7, 0.55, 0.4]){
+    const dataURL = canvas.toDataURL('image/jpeg', q);
+    const b64 = dataURL.slice(dataURL.indexOf(',') + 1);
+    if (b64.length <= MAX_IMAGE_B64) return { b64, dataURL };
+  }
+  throw new Error('that photo is too large even after compression');
+}
+
+/* ================= Claude API ================= */
+function modelConfig(){
+  const model = MODELS.includes(DB.get('model', DEFAULT_MODEL)) ? DB.get('model', DEFAULT_MODEL) : DEFAULT_MODEL;
+  return { model, isHaiku: model === 'claude-haiku-4-5' };
+}
+
+/* One POST, normalised to {ok,status,data,raw} whichever transport is used.
+   In the WebView we go through the native HTTP plugin: a WebView request is
+   cross-origin against api.anthropic.com and the native path sidesteps CORS
+   entirely, while still honouring a timeout. */
+async function httpPostJSON(url, headers, bodyObj, timeoutMs){
+  const http = NATIVE && plugin('CapacitorHttp');
+  if (http){
+    const r = await http.request({
+      url, method: 'POST', headers, data: bodyObj,
+      connectTimeout: timeoutMs, readTimeout: timeoutMs
+    });
+    const isStr = typeof r.data === 'string';
+    let data = r.data;
+    if (isStr){ try { data = JSON.parse(r.data); } catch { data = null; } }
+    return {
+      ok: r.status >= 200 && r.status < 300,
+      status: r.status,
+      data,
+      raw: isStr ? r.data : JSON.stringify(r.data)
+    };
+  }
+
+  const ctl = new AbortController();
+  // Without this a stalled request leaves the button spinning forever.
+  const t = setTimeout(() => ctl.abort(), timeoutMs);
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST', signal: ctl.signal, headers, body: JSON.stringify(bodyObj)
+    });
+  } finally { clearTimeout(t); }
+  const raw = await res.text().catch(() => '');
+  let data = null;
+  try { data = JSON.parse(raw); } catch {}
+  return { ok: res.ok, status: res.status, data, raw };
+}
+
+async function callClaude(body, opts){
+  opts = opts || {};
+  const key = DB.get('apiKey', '');
+  if (!key) throw new Error('no API key saved — add one in Settings');
+  // navigator.onLine is unreliable inside a WebView, so only trust it on the web.
+  if (!NATIVE && !navigator.onLine) throw new Error('you appear to be offline');
+
+  const { model, isHaiku } = modelConfig();
+  const payload = Object.assign({ model }, body);
+  if (isHaiku){
+    // effort is rejected on Haiku 4.5; it uses the older thinking budget instead.
+    delete payload.output_config;
+    if (body.output_config && body.output_config.format){
+      payload.output_config = { format: body.output_config.format };
+    }
+  }
+
+  const headers = {
+    'content-type': 'application/json',
+    'x-api-key': key,
+    'anthropic-version': '2023-06-01',
+    'anthropic-dangerous-direct-browser-access': 'true'
+  };
+
+  const send = async p => {
+    try { return await httpPostJSON(API_URL, headers, p, API_TIMEOUT_MS); }
+    catch (err){
+      if (err && err.name === 'AbortError') throw new Error('the request timed out — try again');
+      throw new Error('could not reach the API — check your connection');
+    }
+  };
+
+  let r = await send(payload);
+
+  if (!r.ok){
+    let detail = (r.raw || '').slice(0, 200);
+    if (r.data && r.data.error && r.data.error.message) detail = r.data.error.message;
+
+    // If this account or model rejects the structured-output request shape,
+    // retry once in plain-text mode rather than failing the scan outright.
+    if (r.status === 400 && payload.output_config && /output_config|format|schema/i.test(detail)){
+      const fallback = Object.assign({}, payload);
+      delete fallback.output_config;
+      const r2 = await send(fallback);
+      if (r2.ok) return readMessage(r2.data, opts);
+    }
+    if (r.status === 401) throw new Error('the API key was rejected — check it in Settings');
+    if (r.status === 429) throw new Error('rate limited — wait a moment and try again');
+    if (r.status === 402 || /credit/i.test(detail)) throw new Error('the API account is out of credit');
+    if (r.status >= 500) throw new Error(`the API is having trouble (${r.status}) — try again`);
+    throw new Error(`API ${r.status}: ${detail}`);
+  }
+  if (!r.data) throw new Error('the API returned something unreadable');
+  return readMessage(r.data, opts);
+}
+
+function readMessage(data, opts){
+  if (data && data.error) throw new Error(data.error.message || 'API error');
+  if (data.stop_reason === 'refusal') throw new Error('the model declined to answer that');
+
+  // Thinking blocks come first on current models, so pick the text block by type.
+  const block = (data.content || []).find(b => b && b.type === 'text' && b.text);
+  if (!block){
+    if (data.stop_reason === 'max_tokens') throw new Error('the reply was cut off — try a smaller receipt');
+    throw new Error('the model returned an empty response');
+  }
+  const text = block.text.trim();
+
+  if (!opts.expectJSON){
+    if (data.stop_reason === 'max_tokens') return text + '\n\n[cut off before finishing]';
+    return text;
+  }
+  // A truncated reply is invalid JSON; say so plainly instead of "Unexpected end of input".
+  if (data.stop_reason === 'max_tokens') throw new Error('the receipt was too long to read in one pass');
+  return parseJSON(text);
+}
+
+function parseJSON(text){
+  const clean = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+  const start = clean.indexOf('{'), end = clean.lastIndexOf('}');
+  const slice = (start >= 0 && end > start) ? clean.slice(start, end + 1) : clean;
+  try { return JSON.parse(slice); }
+  catch { throw new Error('the model did not return readable data'); }
+}
+
+/* ================= receipt scanning ================= */
+const RECEIPT_SCHEMA = {
+  type: 'object',
+  properties: {
+    merchant: { type: 'string', description: 'Shop or restaurant name, or "Unknown".' },
+    date: { type: 'string', description: 'YYYY-MM-DD, or an empty string if unreadable.' },
+    amount: { type: 'number', description: 'Grand total actually paid.' },
+    category: { type: 'string', enum: CATEGORIES },
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { name: { type: 'string' }, price: { type: 'number' } },
+        required: ['name', 'price'],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ['merchant', 'date', 'amount', 'category', 'items'],
+  additionalProperties: false
+};
+
+const SCAN_PROMPT =
+`Read this receipt photo and extract what was bought.
+
+- merchant: the shop or restaurant name. Use "Unknown" if you genuinely cannot read it.
+- date: the purchase date as YYYY-MM-DD. Use an empty string if it is not legible. Note that many
+  European receipts write dates as DD.MM.YYYY.
+- amount: the grand total actually paid, as a number. Not a subtotal, not a line item.
+- category: the single closest match from the allowed list.
+- items: every line item you can read. Translate abbreviated or non-English names into plain English
+  ("CHKN BRST" -> "chicken breast", "mlijeko" -> "milk", "kruh" -> "bread"). Give each item its own
+  price. If the receipt is not itemised — typical for restaurants and bars — return an empty array
+  rather than inventing entries.
+
+Best-guess any field that is partly legible; never invent an item that is not printed on the receipt.`;
+
+$('scanBtn').onclick = async () => {
+  if (!DB.get('apiKey', '')){
+    $('keyHint').style.display = 'block';
+    toast('Add an API key in Settings first.', null);
+    return;
+  }
+  // A WebView file input cannot open the camera on its own; the native picker
+  // handles the camera-vs-gallery choice and the runtime permission prompt.
+  const cam = NATIVE && plugin('Camera');
+  if (cam){
+    try {
+      const photo = await cam.getPhoto({
+        source: 'PROMPT', resultType: 'base64', quality: 88,
+        width: MAX_IMAGE_EDGE, correctOrientation: true,
+        promptLabelHeader: 'Receipt', promptLabelPhoto: 'Choose from gallery', promptLabelPicture: 'Take a photo'
+      });
+      if (!photo || !photo.base64String) return;
+      const bin = atob(photo.base64String);
+      const buf = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+      const type = 'image/' + (photo.format === 'png' ? 'png' : 'jpeg');
+      await scanFile(new File([buf], 'receipt.' + (photo.format || 'jpg'), { type }));
+    } catch (err){
+      // The plugin throws a plain "cancelled" when the user backs out.
+      if (!/cancel/i.test(err && err.message || '')) {
+        $('scanErr').innerHTML = `<div class="err">Couldn't open the camera: ${esc(err.message || err)}</div>`;
+      }
+    }
+    return;
+  }
+  $('file').click();
+};
+
+$('file').onchange = async ev => {
+  const file = ev.target.files && ev.target.files[0];
+  // Resetting here (not only in `finally`) lets you re-pick the same photo after a failure.
+  ev.target.value = '';
+  if (!file) return;
+  await scanFile(file);
+};
+
+async function scanFile(file){
+  $('scanErr').innerHTML = '';
+  busy.scan = true;
+  $('scanBtn').disabled = true;
+  $('scanBtn').innerHTML = '<span class="spin"></span>Reading...';
+
+  try {
+    const { b64, dataURL } = await prepareImage(file);
+    $('shot').src = dataURL;          // always a JPEG, so HEIC previews correctly too
+    $('shot').style.display = 'block';
+
+    const parsed = await callClaude({
+      max_tokens: 8000,               // thinking tokens share this budget
+      output_config: {
+        effort: 'low',
+        format: { type: 'json_schema', schema: RECEIPT_SCHEMA }
+      },
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } },
+          { type: 'text', text: SCAN_PROMPT }
+        ]
+      }]
+    }, { expectJSON: true });
+
+    if (!parsed || typeof parsed !== 'object') throw new Error('the model did not return readable data');
+
+    $('e-date').value = isISODate(parsed.date) ? parsed.date : todayStr();
+    $('e-merchant').value = String(parsed.merchant || '').slice(0, 120);
+    const amt = num(parsed.amount);
+    $('e-amount').value = amt ? money(amt) : '';
+    $('e-category').value = CATEGORIES.includes(parsed.category) ? parsed.category : 'Other';
+    pendingItems = Array.isArray(parsed.items) ? parsed.items.map(cleanItem).filter(Boolean).slice(0, 200) : [];
+    renderItems();
+    fieldError('expErr', ['e-merchant', 'e-amount'], '');
+
+    const sum = pendingItems.reduce((s, i) => s + i.price, 0);
+    // Flags a misread total or a missed line item before it silently skews the month.
+    if (pendingItems.length && amt && Math.abs(sum - amt) > Math.max(0.5, amt * 0.05)){
+      $('scanErr').innerHTML = `<div class="hint">Items add up to ${esc(fmt(sum))} but the total reads
+        ${esc(fmt(amt))} — worth a check.</div>`;
+    }
+    toast(pendingItems.length ? `Read ${pendingItems.length} items — review and save.` : 'Receipt read — review and save.', null);
+  } catch (err){
+    $('scanErr').innerHTML = `<div class="err">Couldn't read that receipt: ${esc(err.message)}</div>`;
+    pendingItems = []; renderItems();
+  } finally {
+    busy.scan = false;
+    $('scanBtn').disabled = false;
+    $('scanBtn').textContent = 'Scan receipt';
+  }
+}
+
+function renderItems(){
+  const sum = pendingItems.reduce((s, i) => s + i.price, 0);
+  const amt = parseAmount($('e-amount').value);
+  const showUse = sum > 0 && (!Number.isFinite(amt) || Math.abs(amt - sum) > 0.005);
+
+  $('itemsBox').innerHTML = `
+    <div style="margin-top:4px;padding-top:14px;border-top:1px dashed var(--rule)">
+      <div class="itemshead">
+        <span class="lbl">Items${pendingItems.length ? ' · ' + esc(fmt(sum)) : ' (optional)'}</span>
+        ${showUse ? `<button type="button" class="tiny ghost" id="useSum">Use as total</button>` : ''}
+      </div>
+      ${pendingItems.map((it, i) => `<div class="itemline">
+        <span style="min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(it.name)}</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <span class="mono" style="color:var(--dim)">${esc(fmt(it.price))}</span>
+          <button class="x" type="button" data-rmitem="${i}" aria-label="Remove ${esc(it.name)}">✕</button>
+        </span></div>`).join('')}
+      <div class="additem">
+        <input type="text" id="it-name" placeholder="Add an item" autocomplete="off" aria-label="Item name">
+        <input type="text" id="it-price" inputmode="decimal" placeholder="0.00" autocomplete="off" aria-label="Item price">
+        <button type="button" id="it-add" aria-label="Add item">+</button>
+      </div>
+      <div id="itemErr"></div>
+    </div>`;
+
+  $('itemsBox').querySelectorAll('[data-rmitem]').forEach(b => {
+    b.onclick = () => { pendingItems.splice(Number(b.dataset.rmitem), 1); renderItems(); };
+  });
+  if ($('useSum')) $('useSum').onclick = () => { $('e-amount').value = money(sum); renderItems(); };
+  $('it-add').onclick = addTypedItem;
+  // Enter inside these fields must add the item, not submit the whole expense.
+  [$('it-name'), $('it-price')].forEach(el => {
+    el.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); addTypedItem(); } };
+  });
+}
+
+function addTypedItem(){
+  const name = $('it-name').value.trim();
+  const raw = $('it-price').value.trim();
+  const price = raw ? parseAmount(raw) : 0;
+  if (!name){
+    $('itemErr').innerHTML = '<div class="err">Give the item a name.</div>';
+    $('it-name').focus(); return;
+  }
+  if (raw && (!Number.isFinite(price) || price < 0)){
+    $('itemErr').innerHTML = '<div class="err">That price is not a number.</div>';
+    $('it-price').focus(); return;
+  }
+  pendingItems.push({ name: name.slice(0, 120), price });
+  renderItems();
+  $('it-name').focus();   // renderItems rebuilt the row, so re-grab it
+}
+
+/* ================= weekly analysis ================= */
+$('analyzeBtn').onclick = async () => {
+  $('anaErr').innerHTML = ''; $('anaOut').innerHTML = '';
+  const wk = weekExpenses();
+  if (!wk.length){ $('anaErr').innerHTML = '<div class="err">Nothing logged in the last 7 days.</div>'; return; }
+
+  busy.analyze = true;
+  $('analyzeBtn').disabled = true;
+  $('analyzeBtn').innerHTML = '<span class="spin"></span>Analyzing...';
+  try {
+    const payload = wk.map(x => {
+      const o = { date: x.date, merchant: x.merchant, amount: x.amount, category: x.category };
+      if (x.note) o.note = x.note;
+      if (x.items && x.items.length) o.items = x.items.map(i => i.name);
+      return o;
+    });
+    const subLines = subs.map(s => `${s.name} ${fmt(s.amount)}/${s.cycle === 'yearly' ? 'yr' : 'mo'}`).join(', ');
+
+    const txt = await callClaude({
+      max_tokens: 8000,
+      output_config: { effort: 'medium' },
+      messages: [{
+        role: 'user',
+        content:
+`Here is one week of my personal expenses as JSON. Amounts are in ${cur()}.
+${JSON.stringify(payload, null, 2)}
+${subLines ? `\nMy active subscriptions: ${subLines}` : ''}
+
+Write a short, direct weekly review in plain text — a few short paragraphs, no markdown headers, no
+heavy bullet lists. Cover:
+1. Total spend and how it breaks down by category.
+2. What I actually ate this week, based on any grocery or food items listed, with honest observations
+   about the balance only where the data supports it. If the item data is too sparse to say anything
+   real about diet, say so plainly rather than guessing.
+3. One or two other categories worth a comment — one that jumped, or a small recurring spend adding up.
+4. Two or three concrete, specific suggestions for next week.
+
+Be direct and specific, not generic. Do not restate the raw JSON back to me.`
+      }]
+    }, { expectJSON: false });
+
+    $('anaOut').innerHTML = `<div class="prose">${esc(txt)}</div>`;
+  } catch (err){
+    $('anaErr').innerHTML = `<div class="err">Couldn't run analysis: ${esc(err.message)}</div>`;
+  } finally {
+    busy.analyze = false;
+    $('analyzeBtn').textContent = 'Analyze this week';
+    render();                     // re-derives disabled state instead of forcing it on
+  }
+};
+
+/* ================= settings ================= */
+$('apiKey').value = DB.get('apiKey', '');
+$('revealKey').onclick = () => {
+  const shown = $('apiKey').type === 'text';
+  $('apiKey').type = shown ? 'password' : 'text';
+  $('revealKey').textContent = shown ? 'Show' : 'Hide';
+  $('revealKey').setAttribute('aria-pressed', shown ? 'false' : 'true');
+};
+$('saveKey').onclick = () => {
+  const k = $('apiKey').value.trim();
+  if (k && !/^sk-ant-/.test(k)){
+    $('keyErr').innerHTML = '<div class="err">That does not look like an Anthropic key (they start with sk-ant-). Saved anyway.</div>';
+  } else {
+    $('keyErr').innerHTML = k ? '<div class="ok">Key saved on this device.</div>' : '';
+  }
+  DB.set('apiKey', k);
+  $('saveKey').textContent = 'Saved ✓';
+  setTimeout(() => { $('saveKey').textContent = 'Save key'; }, 1500);
+  render();
+};
+$('clearKey').onclick = () => {
+  DB.del('apiKey'); $('apiKey').value = '';
+  $('keyErr').innerHTML = '<div class="ok">Key removed from this device.</div>';
+  render();
+};
+
+const savedModel = DB.get('model', DEFAULT_MODEL);
+$('modelSel').value = MODELS.includes(savedModel) ? savedModel : DEFAULT_MODEL;
+$('modelSel').onchange = () => DB.set('model', $('modelSel').value);
+
+$('currency').value = cur();
+$('currency').oninput = () => { DB.set('currency', $('currency').value.trim() || '€'); render(); drawTrend(); };
+
+/* ---------- reminders ---------- */
+const notifSupported = () => typeof window !== 'undefined' && 'Notification' in window;
+// A stored value can be garbage from a hand-edited export; don't silently
+// reinterpret it as 00:00.
+const remindTime = () => {
+  const v = DB.get('remindAt', '20:00');
+  return (typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v)) ? v : '20:00';
+};
+
+$('remindAt').value = remindTime();
+$('remindAt').onchange = async () => {
+  DB.set('remindAt', $('remindAt').value || '20:00');
+  $('remindAt').value = remindTime();
+  const ln = NATIVE && plugin('LocalNotifications');
+  if (ln && DB.get('notifOn', false)){ await scheduleNative(ln); $('notifState').textContent = `Reminder set for ${remindTime()} every day.`; return; }
+  scheduleReminder();
+};
+
+$('enableNotif').onclick = async () => {
+  const ln = NATIVE && plugin('LocalNotifications');
+  if (ln){
+    // A real OS alarm: fires whether or not the app is running, which the
+    // browser timer below can never guarantee.
+    try {
+      let perm = await ln.checkPermissions();
+      if (perm.display !== 'granted') perm = await ln.requestPermissions();
+      if (perm.display !== 'granted'){
+        $('notifState').textContent = 'Permission denied — turn notifications on for Ledger in Android settings.';
+        DB.set('notifOn', false);
+        return;
+      }
+      DB.set('notifOn', true);
+      await scheduleNative(ln);
+      $('notifState').textContent = `Reminder set for ${remindTime()} every day.`;
+    } catch (err){
+      $('notifState').textContent = 'Could not set the reminder: ' + (err && err.message || err);
+    }
+    return;
+  }
+  if (!notifSupported()){ $('notifState').textContent = 'This browser does not support notifications.'; return; }
+  let p;
+  try { p = await Notification.requestPermission(); }
+  catch { p = Notification.permission; }
+  DB.set('notifOn', p === 'granted');
+  $('notifState').textContent = p === 'granted'
+    ? `Reminder set for ${remindTime()} daily, while the app is open or recently backgrounded.`
+    : 'Permission denied — enable notifications for this app in your phone settings.';
+  scheduleReminder();
+};
+
+const REMINDER_ID = 1001;
+async function scheduleNative(ln){
+  const [h, m] = remindTime().split(':').map(Number);
+  await ln.cancel({ notifications: [{ id: REMINDER_ID }] }).catch(() => {});
+  await ln.schedule({ notifications: [{
+    id: REMINDER_ID,
+    title: 'Ledger',
+    body: "Log today's spending.",
+    schedule: { on: { hour: h, minute: m }, repeats: true, allowWhileIdle: true }
+  }]});
+}
+$('disableNotif').onclick = async () => {
+  DB.set('notifOn', false);
+  clearTimeout(reminderTimer);
+  const ln = NATIVE && plugin('LocalNotifications');
+  if (ln) await ln.cancel({ notifications: [{ id: REMINDER_ID }] }).catch(() => {});
+  $('notifState').textContent = 'Reminder off.';
+};
+
+let reminderTimer = null;
+function scheduleReminder(){
+  clearTimeout(reminderTimer);
+  if (NATIVE) return;   // the OS alarm above owns this on Android
+  // Guarding on support first: reading Notification.permission on a browser
+  // without the API threw and killed the rest of the boot script.
+  if (!notifSupported() || !DB.get('notifOn', false) || Notification.permission !== 'granted') return;
+
+  const parts = remindTime().split(':');
+  const h = Number(parts[0]), m = Number(parts[1]);
+  const now = new Date(), t = new Date();
+  t.setHours(h, m, 0, 0);
+  if (t <= now) t.setDate(t.getDate() + 1);
+
+  reminderTimer = setTimeout(async () => {
+    if (DB.get('lastLog', '') !== todayStr()) await fireReminder();
+    scheduleReminder();
+  }, Math.max(1000, t - now));
+}
+
+async function fireReminder(){
+  const body = "You haven't logged any spending today.";
+  try {
+    // Android Chrome throws "Illegal constructor" on `new Notification()`, and an
+    // iOS home-screen app has no Notification constructor at all — both require
+    // the service worker registration.
+    if ('serviceWorker' in navigator){
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.showNotification){
+        await reg.showNotification('Ledger', { body, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'ledger-daily' });
+        return;
+      }
+    }
+    new Notification('Ledger', { body, icon: 'icon-192.png' });
+  } catch {
+    toast(body, null, 6000);   // last resort: at least show it in-app
+  }
+}
+
+/* ---------- export / import ---------- */
+$('exportBtn').onclick = () => {
+  try {
+    const blob = new Blob([JSON.stringify({
+      app: 'ledger', version: 2, exportedAt: new Date().toISOString(),
+      currency: cur(), expenses: expenses.map(stripMeta), subs
+    }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `ledger-${todayStr()}.json`;
+    document.body.appendChild(a);        // Firefox and some mobile browsers need it in the DOM
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);   // the original leaked every export
+    $('ioMsg').innerHTML = `<div class="ok">Exported ${expenses.length} entries and ${subs.length} subscriptions.</div>`;
+  } catch (err){
+    $('ioMsg').innerHTML = `<div class="err">Export failed: ${esc(err.message)}</div>`;
+  }
+};
+
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = async ev => {
+  const f = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if (!f) return;
+  $('ioMsg').innerHTML = '';
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d || typeof d !== 'object') throw new Error('not a Ledger export');
+
+    const inExp = Array.isArray(d.expenses) ? d.expenses.map(cleanExpense).filter(Boolean) : [];
+    const inSub = Array.isArray(d.subs) ? d.subs.map(cleanSub).filter(Boolean) : [];
+    if (!inExp.length && !inSub.length) throw new Error('no entries found in that file');
+
+    // The original replaced everything with no warning — one mis-tap wiped the lot.
+    const replace = (expenses.length || subs.length)
+      ? !confirm(`Import ${inExp.length} entries and ${inSub.length} subscriptions?\n\n` +
+                 `OK = merge with your ${expenses.length} existing entries.\n` +
+                 `Cancel = replace everything instead.`)
+      : false;
+
+    if (replace){
+      if (!confirm(`Replace and permanently delete your ${expenses.length} existing entries?`)) {
+        $('ioMsg').innerHTML = '<div class="hint">Import cancelled.</div>'; return;
+      }
+      expenses = inExp; subs = inSub;
+    } else {
+      const seen = new Set(expenses.map(x => x.id));
+      inExp.forEach(x => { if (seen.has(x.id)) x.id = uid(); expenses.push(x); });
+      const seenS = new Set(subs.map(x => x.id));
+      inSub.forEach(x => { if (seenS.has(x.id)) x.id = uid(); subs.push(x); });
+    }
+    if (typeof d.currency === 'string' && d.currency.trim()) { DB.set('currency', d.currency.trim().slice(0, 3)); $('currency').value = cur(); }
+
+    saveExpenses(); saveSubs(); render(); drawTrend();
+    $('ioMsg').innerHTML = `<div class="ok">${replace ? 'Replaced with' : 'Merged in'} ${inExp.length} entries and ${inSub.length} subscriptions.</div>`;
+  } catch (err){
+    $('ioMsg').innerHTML = `<div class="err">Could not import: ${esc(err.message)}</div>`;
+  }
+};
+
+/* ================= boot ================= */
+if (notifSupported() && DB.get('notifOn', false) && Notification.permission === 'granted'){
+  $('notifState').textContent = `Reminder set for ${remindTime()} daily.`;
+  scheduleReminder();
+} else if (DB.get('notifOn', false)){
+  DB.set('notifOn', false);   // permission was revoked in browser settings since last run
+}
+
+// A timer set at 20:00 does not survive the phone sleeping; re-arm on return.
+document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleReminder(); });
+
+$('cancelEdit').onclick = cancelEdit;
+
+render();
+renderItems();   // draws the empty item row so manual entry is available up front
+reflectEditMode();
+if (!$('tab-overview').hidden) drawTrend();
+
+// Fonts change text metrics, and the chart's gutter is measured from them.
+if (document.fonts && document.fonts.ready){
+  document.fonts.ready.then(() => { if (!$('tab-overview').hidden) drawTrend(); }).catch(() => {});
+}
+
+if (NATIVE){
+  // The files already live inside the package, so there is nothing for a
+  // service worker to cache and a stale cache could only cause harm.
+  const app = plugin('App');
+  if (app && app.addListener){
+    app.addListener('backButton', ({ canGoBack }) => {
+      const active = document.querySelector('nav button[aria-selected="true"]');
+      if (active && active.dataset.tab !== 'add'){ showTab('add'); return; }
+      if (app.minimizeApp) app.minimizeApp();
+    });
+  }
+  const ln = plugin('LocalNotifications');
+  if (ln && DB.get('notifOn', false)) scheduleNative(ln).catch(() => {});
+} else if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'installed' && navigator.serviceWorker.controller){
+            toast('A new version is ready.', () => sw.postMessage({ type: 'SKIP_WAITING' }), 15000, 'Reload');
+          }
+        });
+      });
+    }).catch(() => {});
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded) return; reloaded = true; window.location.reload();
+    });
+  });
+}
+</script>
+</body>
+</html>
